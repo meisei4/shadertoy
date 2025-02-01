@@ -8,7 +8,7 @@ layout(location = 1) uniform float iTime;
 layout(location = 2) uniform float iTimeDelta;
 layout(location = 3) uniform int iFrame;
 layout(location = 4) uniform vec4 iMouse;
-#endif  // This was missing
+#endif  
 
 #define VIRTUAL_RES_X       256.0   // virtual width in pixels
 #define VIRTUAL_RES_Y       192.0   // virtual height in pixels
