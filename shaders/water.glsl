@@ -49,7 +49,7 @@ vec3 compute_color_operations(float wave_value);
 float retro_quantize(float value, float levels);
 vec3 mix_colors(vec3 color_a, vec3 color_b, float factor);
 
-float compute_wave_pattern_1(vec2 uv, float time, float frequency);
+float compute_blobs_pattern(vec2 uv, float time, float frequency);
 vec2 distortUV(vec2 uv, float time);
 float causticSpot(vec2 uv, vec2 center, float radius);
 float fbm(vec2 p);
@@ -59,7 +59,7 @@ float noise(vec2 p);
 void mainImage(out vec4 frag_color, in vec2 frag_coord) {
     vec2 final_uv = pixelate_and_zoom_uv(frag_coord, iResolution.xy, vec2(VIRTUAL_RES_X, VIRTUAL_RES_Y), ZOOM_FACTOR);
     
-    float combined_wave = compute_wave_pattern_1(final_uv, iTime, WAVE_FREQUENCY);
+    float combined_wave = compute_wave_pattern(final_uv, iTime, WAVE_FREQUENCY);
     
     vec3 final_color = compute_color_operations(combined_wave);
     
@@ -106,8 +106,8 @@ float compute_wave_pattern(vec2 uv, float time, float frequency) {
 }
 
 //TODO: This is where to start next time, focus on the blobs/caustic spots, these look promising
-float compute_wave_pattern_1(vec2 uv, float time, float frequency) {
-    vec2 distortedUV = distortUV(uv, time);
+float compute_blobs_pattern(vec2 uv, float time, float frequency) {
+    vec2 distortedUV = uv; //distortUV(uv, time);
     
     float angle1 = time * ANGLE_SPEED_1;
     vec2 rotated_uv1 = rotate_uv(distortedUV, angle1);
@@ -120,8 +120,8 @@ float compute_wave_pattern_1(vec2 uv, float time, float frequency) {
     float base_wave = mix_waves(wave_pattern_1, wave_pattern_2, 0.5);
     
     float blobEffect = 0.0;
-    vec2 center1 = vec2(fract(sin(time + 1.0)*43758.5453), fract(cos(time + 1.0)*12345.6789));
-    vec2 center2 = vec2(fract(sin(time + 2.0)*43758.5453), fract(cos(time + 2.0)*12345.6789));
+    vec2 center1 = vec2(fract(sin(time + 1.0)*1.0), fract(cos(time + 1.0)*1.0));
+    vec2 center2 = vec2(fract(sin(time + 2.0)*1.0), fract(cos(time + 2.0)*1.0));
     blobEffect += causticSpot(distortedUV, center1, 0.1);
     blobEffect += causticSpot(distortedUV, center2, 0.12);
     blobEffect = clamp(blobEffect, 0.0, 1.0);
