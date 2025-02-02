@@ -113,7 +113,6 @@ void mainImage(out vec4 frag_color, in vec2 frag_coord) {
     frag_color = (water_layer_1 + water_layer_2) * final_opacity + vec4(background, 1.0);
 }
 
-
 void main() { 
     mainImage(gl_FragColor, gl_FragCoord.xy); 
 }
