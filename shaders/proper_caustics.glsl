@@ -56,6 +56,12 @@ layout(location = 4) uniform vec4 iMouse;
 #define COMBINED_AVG_THRESHOLD      1.3     // If water+highlights are below this (0–3), the opacity is reduced.
 #define WATER_OPACITY_MULTIPLIER    0.3     // Scales opacity when below threshold (0–1).
 
+#define SHOW_WATER_LAYER_1
+#define SHOW_WATER_LAYER_2
+#define SHOW_WATER_HIGHLIGHTS_1
+#define SHOW_WATER_HIGHLIGHTS_2
+#define SHOW_BACKGROUND
+
 vec2 pixelate_and_zoom_uv(vec2 frag_coord, vec2 res, vec2 virtual_res, float zoom_factor);
 vec2 pixelate_uv(vec2 uv, vec2 res, vec2 virtual_res);
 vec2 zoom_uv(vec2 uv, float zoom_factor);
@@ -72,19 +78,53 @@ vec4 get_texture_background(vec2 uv, vec4 water);
 vec3 get_merged_background(vec2 uv, vec4 water_layer);
 float get_final_opacity(vec4 water_layer_1, vec4 water_layer_2, vec4 water_highlights_1, vec4 water_highlights_2);
 
+#define SHOW_WATER_LAYER_1
+#define SHOW_WATER_LAYER_2
+#define SHOW_WATER_HIGHLIGHTS_1
+#define SHOW_WATER_HIGHLIGHTS_2
+#define SHOW_BACKGROUND
+
 void mainImage(out vec4 frag_color, in vec2 frag_coord) {
     vec2 uv = get_uv(frag_coord);
     vec2 scaled_uv = uv * CAUSTIC_SCALE;
-    vec4 water_layer_1 = get_water_layer_1(scaled_uv);
-    vec4 water_layer_2 = get_water_layer_2(scaled_uv);
-    vec4 water_highlights_1 = get_water_highlights_1(scaled_uv);
-    vec4 water_highlights_2 = get_water_highlights_2(scaled_uv);
-    vec3 background = get_merged_background(uv, water_layer_1);
-    float final_opacity = get_final_opacity(water_layer_1, water_layer_2, water_highlights_1, water_highlights_2);
+
+    //TODO: Idk how macros work, but i like this better visually, define defaults first.
+    vec4 water_layer_1 = vec4(0.0);
+    vec4 water_layer_2 = vec4(0.0);
+    vec4 water_highlights_1 = vec4(0.0);
+    vec4 water_highlights_2 = vec4(0.0);
+    vec3 background = vec3(0.0);
+
+    #ifdef SHOW_WATER_LAYER_1
+        water_layer_1 = get_water_layer_1(scaled_uv);
+    #endif
+    #ifdef SHOW_WATER_LAYER_2
+        water_layer_2 = get_water_layer_2(scaled_uv);
+    #endif
+    #ifdef SHOW_WATER_HIGHLIGHTS_1
+        water_highlights_1 = get_water_highlights_1(scaled_uv);
+    #endif
+    #ifdef SHOW_WATER_HIGHLIGHTS_2
+        water_highlights_2 = get_water_highlights_2(scaled_uv);
+    #endif
+    #ifdef SHOW_BACKGROUND
+        background = get_merged_background(uv, water_layer_1);
+    #endif
+
+    float final_opacity = get_final_opacity(
+        water_layer_1,
+        water_layer_2,
+        water_highlights_1,
+        water_highlights_2
+    );
+
     frag_color = (water_layer_1 + water_layer_2) * final_opacity + vec4(background, 1.0);
 }
 
-void main() { mainImage(gl_FragColor, gl_FragCoord.xy); }
+
+void main() { 
+    mainImage(gl_FragColor, gl_FragCoord.xy); 
+}
 
 vec2 pixelate_and_zoom_uv(vec2 frag_coord, vec2 res, vec2 virtual_res, float zoom_factor) {
     vec2 uv = frag_coord / res;
@@ -98,7 +138,9 @@ vec2 pixelate_uv(vec2 uv, vec2 res, vec2 virtual_res) {
     return (floor(scaled * factor) / factor) / res;
 }
 
-vec2 zoom_uv(vec2 uv, float zoom_factor) { return uv * zoom_factor; }
+vec2 zoom_uv(vec2 uv, float zoom_factor) { 
+    return uv * zoom_factor; 
+}
 
 vec3 get_turbulence_background(vec2 uv) {
     float t_time = iTime * TURBULENCE_TIME_SCALE + TURBULENCE_TIME_OFFSET;
