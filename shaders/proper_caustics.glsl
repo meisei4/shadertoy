@@ -2,14 +2,6 @@
 precision mediump float;
 #endif
 
-#ifdef __VSCODE__ // Only for VS Code linter
-layout(location = 0) uniform vec3 ires;
-layout(location = 1) uniform float iTime;
-layout(location = 2) uniform float iTimeDelta;
-layout(location = 3) uniform int iFrame;
-layout(location = 4) uniform vec4 iMouse;
-#endif
-
 #iChannel0 "file:///Users/mac/shadertoy/textures/noise.png"
 #iChannel1 "file:///Users/mac/shadertoy/textures/icebergs.jpg"
 #iChannel2 "file:///Users/mac/shadertoy/textures/pebbles.png"
