@@ -12,9 +12,9 @@ layout(location = 4) uniform vec4 iMouse;
 
 // Texture channels (Shadertoy #iChannel directives)
 // (Make sure these textures are available in your local environment.)
-#iChannel0 "file:///Users/mac/shadertoy/textures/noise.png"
-#iChannel1 "file:///Users/mac/shadertoy/textures/icebergs.jpg"
-#iChannel2 "file:///Users/mac/shadertoy/textures/pebbles.png"
+#iChannel0 "file:///Users/mac/misc_game_dev/shadertoy/textures/noise.png"
+#iChannel1 "file:///Users/mac/misc_game_dev/shadertoy/textures/rocks.jpg"
+#iChannel2 "file:///Users/mac/misc_game_dev/shadertoy/textures/pebbles.png"
 
 // --- Resolution Control Definitions ---
 // These values let you work in a “virtual” resolution that is then pixelated and zoomed.
