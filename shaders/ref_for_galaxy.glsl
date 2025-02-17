@@ -45,12 +45,13 @@ void mainImage( out vec4 fragColor, in vec2 fragCoord )
     
     float alpha = opacity;
     
-   if(avg(water1 + water2) < 1.7) {
-       alpha = 0.0;
-   }
-   if(avg(water1 + water2 + highlights1 + highlights2) < 1.25) {
-       alpha = 0.5 * opacity;
-   }
+    if(avg(water1 + water2) > 0.3) {
+        alpha = 0.0;
+    }
+    
+    if(avg(water1 + water2 + highlights1 + highlights2) > 0.75) {
+        alpha = 5.0 * opacity;
+    }
 
     // Output to screen
     fragColor = (water1 + water2) * alpha + background;
