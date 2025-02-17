@@ -7,6 +7,10 @@ float avg(vec4 color) {
     return (color.r + color.g + color.b)/3.0;
 }
 
+float avg_1channel(vec4 color){
+    return (color.r)/3.0;
+}
+
 void mainImage( out vec4 fragColor, in vec2 fragCoord )
 {
     // Flow Speed, increase to make the water flow faster.
@@ -18,7 +22,6 @@ void mainImage( out vec4 fragColor, in vec2 fragCoord )
     // Water opacity, higher opacity means the water reflects more light.
     float opacity = 0.5;
  
-    
     // Normalized pixel coordinates (from 0 to 1)
     vec2 uv = (fragCoord/iResolution.xy);
     vec2 scaledUv = uv*scale;
@@ -27,21 +30,20 @@ void mainImage( out vec4 fragColor, in vec2 fragCoord )
     // Add 0.1 to both uv vectors to avoid the layers stacking perfectly and creating a huge unnatural highlight
     vec4 water1 = texture(iChannel0, scaledUv + iTime*0.02*speed - 0.1);
     vec4 water2 = texture(iChannel0, scaledUv.xy + iTime*speed*vec2(-0.02, -0.02) + 0.1);
-    
-    // Water highlights
+
     vec4 highlights1 = texture(iChannel2, scaledUv.xy + iTime*speed / vec2(-10, 100));
     vec4 highlights2 = texture(iChannel2, scaledUv.xy + iTime*speed / vec2(10, 100));
-    
+
     // Background image
-    vec4 background = texture(iChannel1, vec2(uv) + avg(water1) * 0.05);
+    vec4 background = texture(iChannel1, vec2(uv) + avg_1channel(water1) * 0.05);
     
     // Average the colors of the water layers (convert from 1 channel to 4 channel
-    water1.rgb = vec3(avg(water1));
-    water2.rgb = vec3(avg(water2));
+    water1.rgb = vec3(avg_1channel(water1));
+    water2.rgb = vec3(avg_1channel(water2));
     
     // Average and smooth the colors of the highlight layers
-    highlights1.rgb = vec3(avg(highlights1)/1.5);
-    highlights2.rgb = vec3(avg(highlights2)/1.5);
+    highlights1.rgb = vec3(avg_1channel(highlights1) / 1.5);
+    highlights2.rgb = vec3(avg_1channel(highlights2) / 1.5);
     
     float alpha = opacity;
     

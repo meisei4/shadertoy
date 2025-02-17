@@ -8,18 +8,18 @@ precision mediump float;
 
 #define VIRTUAL_RES_X               256.0   //DS width
 #define VIRTUAL_RES_Y               192.0   //DS height
-#define ZOOM_FACTOR                 2.0   // Multiplies the pixelated UV coordinates: >1.0 zooms in, <1.0 zooms out (practical: 0.5–2.0).
+#define ZOOM_FACTOR                 1.5   // Multiplies the pixelated UV coordinates: >1.0 zooms in, <1.0 zooms out (practical: 0.5–2.0).
 
-#define TAU                         20.28318530718    // Controls turbulence periodicity (try values between 20 and 30).
+#define TAU                         10.28318530718    // Controls turbulence periodicity (try values between 20 and 30).
 #define MAX_ITER                    4                 // Sets how many iterations to compute (3–6 is common).
 #define TURBULENCE_TIME_SCALE       0.5               // Higher values make turbulence animate faster (0.1–1.0).
 #define TURBULENCE_TIME_OFFSET      23.0              // Shifts the phase; experiment between 0 and 50.
-#define TURBULENCE_INTENSITY        0.5             // Controls distortion strength (0.001–0.02).
+#define TURBULENCE_INTENSITY        0.2             // Controls distortion strength (0.001–0.02).
 #define TURBULENCE_ITER_SCALE       3.5               // Affects per‐iteration influence (1.0–10.0).
 #define TURBULENCE_BASE             1.17              // Base contrast for turbulence; typical values around 1.0–2.0.
 #define TURBULENCE_EXPONENT         1.4               // Exponent for contrast; increasing it boosts contrast (0.5–3.0).
-#define TURBULENCE_POWER            8.0               // Exaggerates the effect (1.0–10.0).
-#define TURBULENCE_TINT             vec3(1.0, 1.0, 0.0)  // Shifts the final color; each channel is usually in 0.0–1.0.
+#define TURBULENCE_POWER            1.0               // Exaggerates the effect (1.0–10.0).
+#define TURBULENCE_TINT             vec3(0.0, 1.0, 0.0)  // Shifts the final color; each channel is usually in 0.0–1.0.
 
 //TODO: get the coloration stuff to fix
 
@@ -32,7 +32,7 @@ precision mediump float;
 #define WATER2_TIME_OFFSET_X        -0.02   // Time offsets (try –0.1 to 0.1).
 #define WATER2_TIME_OFFSET_Y        0.02
 
-#define HIGHLIGHT_OFFSET_X1         -30.0   // Offsets for sampling highlight textures (experiment with –100 to 100).
+#define HIGHLIGHT_OFFSET_X1         -10.0   // Offsets for sampling highlight textures (experiment with –100 to 100).
 #define HIGHLIGHT_OFFSET_Y1         100.0   
 #define HIGHLIGHT_OFFSET_X2         10.0    
 #define HIGHLIGHT_OFFSET_Y2         100.0   
@@ -48,7 +48,7 @@ precision mediump float;
 
 #define WATER_AVG_THRESHOLD         1.7     // If the water brightness falls below this (0–2), the water is not rendered.
 #define COMBINED_AVG_THRESHOLD      1.25     // If water+highlights are below this (0–2), the opacity is reduced.
-#define WATER_OPACITY_MULTIPLIER    0.3     // Scales opacity when below threshold (0–1).
+#define WATER_OPACITY_MULTIPLIER    0.8     // Scales opacity when below threshold (0–1).
 
 #define SHOW_WATER_LAYER_1
 #define SHOW_WATER_LAYER_2
@@ -188,8 +188,8 @@ vec4 get_texture_background(vec2 uv, vec4 water_layer) {
 
 vec3 get_merged_background(vec2 uv, vec4 water_layer) {
     vec4 tex_background = get_texture_background(uv, water_layer);
-    //vec3 turb_bg = get_turbulence_background(uv);
-    vec3 turb_bg = vec3(0.0);
+    vec3 turb_bg = get_turbulence_background(uv);
+    //vec3 turb_bg = vec3(0.0);
     return mix(turb_bg, tex_background.rgb, BACKGROUND_BLEND_FACTOR);
 }
 
