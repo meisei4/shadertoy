@@ -222,9 +222,9 @@ In the code, we first compute:
 #define FULL_ALPHA 4.0
 ```
 
-- We start with \( \alpha = \text{BASE\_ALPHA} = 0.4 \). This would be the “normal” overlay opacity.
-- If \( \text{disp\_layers\_mean\_intensity} > 0.30 \), we set \( \alpha = 0.0 \) (“NEGATE THE EFFECT”).
-- If \( \text{all\_layers\_mean\_intensity} > 0.75 \), we set \( \alpha = 4.0 \) (“BLAST TO FULL WHITE”).
+- We start with $$\alpha = \text{BASE\_ALPHA} = 0.4$$ This would be the “normal” overlay opacity.
+- If $$\text{disp\_layers\_mean\_intensity} > 0.30$$, we set $$\alpha = 0.0$$ (“NEGATE THE EFFECT”).
+- If $$\text{all\_layers\_mean\_intensity} > 0.75 $$, we set $$\alpha = 4.0 $$ (“BLAST TO FULL WHITE”).
 
 Hence:
 
@@ -283,8 +283,8 @@ $$
 
 ### 8.3 Threshold Comparison
 
-- \( \text{NOISE\_INTENSITY\_THRESHOLD} = 0.30 \) is within \([0, 0.66]\).  
-- \( \text{NOISE\_AND\_CAUSTIC\_INTENSITY\_THRESHOLD} = 0.75 \) is within \([0, 1.10]\).  
+- \( $$\text{NOISE\_INTENSITY\_THRESHOLD} = 0.30$$ \) is within \([0, 0.66]\).  
+- \($$ \text{NOISE\_AND\_CAUSTIC\_INTENSITY\_THRESHOLD} = 0.75 $$\) is within \([0, 1.10]\).  
 
 This allows the first threshold (0.30) to “negate” the effect if displacement layers alone are too strong, and the second threshold (0.75) to “blast to white” if the combined displacement + caustics are especially bright.
 
