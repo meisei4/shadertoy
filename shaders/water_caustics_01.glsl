@@ -152,7 +152,7 @@ vec4 sample_background_with_disp_map(
     return texture(tex, bg_uv);
 }
 
-float float compute_effective_opacity(
+float compute_effective_opacity(
     vec4 noise_disp_map_1, 
     vec4 noise_disp_map_2, 
     vec4 caustics_disp_map_1, 
