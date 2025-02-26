@@ -9,12 +9,8 @@
 #define SHOW_BACKGROUND
 
 vec4 sample_disp_map(sampler2D tex, vec2 uv, vec2 velocity, vec2 positional_offset, float intensity_factor);
-float compute_effective_opacity(vec4 noise_disp_map_1, vec4 noise_disp_map_2, vec4 caustics_disp_map_1, vec4 caustics_disp_map_2); 
-vec4 sample_noise_disp_map_1(vec2 uv);   
-vec4 sample_noise_disp_map_2(vec2 uv);     
-vec4 sample_caustics_disp_map_1(vec2 uv);    
-vec4 sample_caustics_disp_map_2(vec2 uv);    
-vec4 sample_background(sampler2D tex, vec2 uv, vec4 disp_map, float warp_factor); // This best demonstrates fundamental displacement map concept
+vec4 sample_background_with_disp_map(sampler2D tex, vec2 uv, vec4 disp_map, float warp_factor); // This best demonstrates fundamental displacement map concept
+float compute_effective_opacity(vec4 noise_disp_map_1, vec4 noise_disp_map_2, vec4 caustics_disp_map_1, vec4 caustics_disp_map_2);   
 vec2 scroll_displacement_map(vec2 uv, vec2 velocity, vec2 positional_offset); 
 vec2 pixelate_uv(vec2 uv);
 
@@ -29,23 +25,58 @@ void mainImage(out vec4 frag_color, in vec2 frag_coord) {
     #ifdef PIXELATE_UV
         uv = pixelate_uv(uv);
     #endif
+
     #ifdef SHOW_NOISE_DISP_MAP_1
-        noise_disp_map_1 = sample_noise_disp_map_1(uv);
-    #endif
-    #ifdef SHOW_NOISE_DISP_MAP_2
-        noise_disp_map_2 = sample_noise_disp_map_2(uv);
-    #endif
-    #ifdef SHOW_CAUSTICS_DISP_MAP_1
-        caustics_disp_map_1 = sample_caustics_disp_map_1(uv);
-    #endif
-    #ifdef SHOW_CAUSTICS_DISP_MAP_2
-        caustics_disp_map_2 = sample_caustics_disp_map_2(uv);
-    #endif
-    #ifdef SHOW_BACKGROUND
-        background = sample_background(iChannel1, uv, noise_disp_map_1, BACKGROUND_DISP_WARP_FACTOR);
+        noise_disp_map_1 = sample_disp_map(
+            iChannel0, uv, 
+            NOISE_DISP_MAP_1_SCROLL_VELOCITY, 
+            NOISE_DISP_MAP_1_INITIAL_OFFSET, 
+            NOISE_DISP_MAP_DIMMING_FACTOR
+        );
     #endif
 
-    float alpha = compute_effective_opacity(noise_disp_map_1, noise_disp_map_2, caustics_disp_map_1, caustics_disp_map_2);
+    #ifdef SHOW_NOISE_DISP_MAP_2
+        noise_disp_map_2 = sample_disp_map(
+            iChannel0, uv, 
+            NOISE_DISP_MAP_2_SCROLL_VELOCITY, 
+            NOISE_DISP_MAP_2_INITIAL_OFFSET, 
+            NOISE_DISP_MAP_DIMMING_FACTOR
+        );
+    #endif
+
+    #ifdef SHOW_CAUSTICS_DISP_MAP_1
+        caustics_disp_map_1 = sample_disp_map(
+            iChannel2, uv, 
+            CAUSTICS_DISP_MAP_1_SCROLL_VELOCITY, 
+            ZERO_POSITIONAL_OFFSET, 
+            CAUSTICS_DISP_MAP_DIMMING_FACTOR
+        );
+    #endif
+
+    #ifdef SHOW_CAUSTICS_DISP_MAP_2
+        caustics_disp_map_2 = sample_disp_map(
+            iChannel2, uv, 
+            CAUSTICS_DISP_MAP_2_SCROLL_VELOCITY, 
+            ZERO_POSITIONAL_OFFSET, 
+            CAUSTICS_DISP_MAP_DIMMING_FACTOR
+        );
+    #endif
+
+    #ifdef SHOW_BACKGROUND
+        background = sample_background_with_disp_map(
+            iChannel1, uv, 
+            noise_disp_map_1, 
+            BACKGROUND_DISP_WARP_FACTOR
+        );
+    #endif
+
+    float alpha = compute_effective_opacity(
+        noise_disp_map_1, 
+        noise_disp_map_2, 
+        caustics_disp_map_1, 
+        caustics_disp_map_2
+    );
+
     frag_color = (noise_disp_map_1 + noise_disp_map_2) * alpha + background;
 }
 
@@ -98,14 +129,35 @@ Caustic Effect Domain & Displacement Map Sampling Summary:
          • Otherwise, use BLURRY_ALPHA.
 */
 
-vec4 sample_disp_map(sampler2D tex, vec2 uv, vec2 velocity, vec2 positional_offset, float intensity_factor) {
+vec4 sample_disp_map(
+    sampler2D tex, 
+    vec2 uv, 
+    vec2 velocity, 
+    vec2 positional_offset, 
+    float intensity_factor
+) {
     vec2 offset_uv = scroll_displacement_map(uv, velocity, positional_offset);
     float noise_value = texture(tex, offset_uv).r; // Single-channel (red)
     float scaled_noise = noise_value * intensity_factor;   // Apply intensity/darkening factor to dim the displacement map (otherwise colors get blown out) 
     return vec4(scaled_noise, scaled_noise, scaled_noise, 1.0);
 }
 
-float compute_effective_opacity(vec4 noise_disp_map_1, vec4 noise_disp_map_2, vec4 caustics_disp_map_1, vec4 caustics_disp_map_2) {
+vec4 sample_background_with_disp_map(
+    sampler2D tex, 
+    vec2 uv, 
+    vec4 disp_map, 
+    float warp_factor
+) {
+    vec2 bg_uv = uv + (disp_map.r * warp_factor);
+    return texture(tex, bg_uv);
+}
+
+float float compute_effective_opacity(
+    vec4 noise_disp_map_1, 
+    vec4 noise_disp_map_2, 
+    vec4 caustics_disp_map_1, 
+    vec4 caustics_disp_map_2
+) {
     //pull out the r channels only (everything is grayscaled) for these intensity summations
     float noise_disp_maps_grayscale_intensity_sum = noise_disp_map_1.r + noise_disp_map_2.r; 
     float all_disp_maps_grayscale_intensity_sum = noise_disp_map_1.r + noise_disp_map_2.r + caustics_disp_map_1.r + caustics_disp_map_2.r;
@@ -119,27 +171,6 @@ float compute_effective_opacity(vec4 noise_disp_map_1, vec4 noise_disp_map_2, ve
          alpha = FULL_ALPHA; // peak
     }
    return alpha;
-}
-
-vec4 sample_noise_disp_map_1(vec2 uv) {
-    return sample_disp_map(iChannel0, uv, NOISE_DISP_MAP_1_SCROLL_VELOCITY, NOISE_DISP_MAP_1_INITIAL_OFFSET, NOISE_DISP_MAP_DIMMING_FACTOR);
-}
-
-vec4 sample_noise_disp_map_2(vec2 uv) {
-    return sample_disp_map(iChannel0, uv, NOISE_DISP_MAP_2_SCROLL_VELOCITY, NOISE_DISP_MAP_2_INITIAL_OFFSET, NOISE_DISP_MAP_DIMMING_FACTOR);
-}
-
-vec4 sample_caustics_disp_map_1(vec2 uv) {
-    return sample_disp_map(iChannel2, uv, CAUSTICS_DISP_MAP_1_SCROLL_VELOCITY, ZERO_POSITIONAL_OFFSET, CAUSTICS_DISP_MAP_DIMMING_FACTOR);
-}
-
-vec4 sample_caustics_disp_map_2(vec2 uv) {
-    return sample_disp_map(iChannel2, uv, CAUSTICS_DISP_MAP_2_SCROLL_VELOCITY, ZERO_POSITIONAL_OFFSET, CAUSTICS_DISP_MAP_DIMMING_FACTOR);
-}
-
-vec4 sample_background(sampler2D tex, vec2 uv, vec4 disp_map, float warp_factor) {
-    vec2 bg_uv = uv + (disp_map.r * warp_factor);
-    return texture(tex, bg_uv);
 }
 
 vec2 scroll_displacement_map(vec2 uv, vec2 velocity, vec2 positional_offset) {
