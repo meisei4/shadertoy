@@ -1,120 +1,107 @@
-## MATH
+**Guide to Customizing Textures and Using the Shader in VSCode (via Shader Toy extension) OR Shadertoy.com**
 
-## 1. Converting Fragment Coordinates to UV
+This shader code uses three texture “channels” (iChannel0, iChannel1, iChannel2), each referenced by a file path or name in the code’s header comments. Below is a step-by-step guide on how to change or customize these textures, both in Visual Studio Code with the Shader Toy extension and in the online Shadertoy environment.
 
-We first convert the 2D fragment coordinates `frag_coord` to normalized texture coordinates `uv` by dividing by the viewport (resolution) size:
+---
 
-```math
-\text{uv} = \frac{\text{frag\_coord}}{\text{iResolution}.xy}
+## 1. Working with the Visual Studio Code Shader Toy Extension
+
+### 1.1 Installing the Extension
+1. Open Visual Studio Code.
+2. Go to the Extensions view by clicking on the Extensions icon in the Activity Bar (on the left) or press <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>X</kbd>.
+3. In the search bar, type:  
+   ```
+   stevensona.shader-toy
+   ```
+4. Click **Install** next to the “Shader Toy” extension by **Stevensona**.
+5. Once installed, you can open `.glsl` or `.frag` files, and a Shader Toy preview window can be displayed (using the “Shader Toy: Show Preview” command from the Command Palette).
+
+### 1.2 Customizing Textures
+Inside your project folder (where your `.glsl` file lives), you’ll see lines like these at the top:
+
+```glsl
+#iChannel0 "file://../textures/gray_noise_small.png" // noise displacement map
+#iChannel1 "file://../textures/rocks.jpg"            // background texture
+#iChannel2 "file://../textures/pebbles.png"          // caustics displacement map
 ```
 
-## 2. (Optional) Pixelation
+1. **Add or Replace Texture Files**  
+   - In VSCode, create a folder (e.g., `textures`) within your project.
+   - Copy or place any images you want to use (e.g., `.png`, `.jpg`) into this `textures` folder.  
+   - Make sure to confirm the path is correct relative to your shader file.
 
-When `PIXELATE_UV` is enabled, the UVs are "chunked" into discrete blocks:
+2. **Update the Channel Paths**  
+   - Adjust the lines above to point to your new textures. For example, if you want to use a file called `water_noise.png`, stored in the same `textures` folder, you could change `#iChannel0` to:
+     ```glsl
+     #iChannel0 "file://../textures/water_noise.png"
+     ```
+   - Repeat for channels 1 and 2 as needed.
 
-```math
-\text{pixelated\_uv} 
-= \left\lfloor \text{uv} \times 
-(\text{VIRTUAL\_DS\_RES\_X}, \text{VIRTUAL\_DS\_RES\_Y}) \right\rfloor 
-\;\big/\; 
-(\text{VIRTUAL\_DS\_RES\_X}, \text{VIRTUAL\_DS\_RES\_Y})
-```
+3. **Texture Dimensions**  
+   - This shader currently expects **single-channel** grayscale images for displacement maps (stored in the red channel), though it will also work fine with color images (and it just samples the `.r` channel).  
+   - Background textures (iChannel1 in the example) are typically **full-color**.  
+   - There is no absolute resolution requirement. However, typical sizes like `256x256`, `512x512`, or `1024x1024` are common for displacement maps and backgrounds. 
 
-This creates a pixelation effect by forcing UV coordinates to snap to a smaller grid.
+4. **Preview**  
+   - After updating and saving your `.glsl` file, open the Shader Toy preview (via **Command Palette** → “Shader Toy: Show Preview”) to see your changes in real time.  
 
+That’s it—using “file://” references, you have full control over which textures are used in each channel.
 
-## 3. Displacement Map Sampling
+---
 
-### 3.1. Scrolling Displacement Maps
+## 2. Using the Shader on Shadertoy.com
 
-Each displacement map is optionally scrolled (animated) over time. Given original UV, the shader applies:
+Shadertoy.com provides a simple interface to experiment with GLSL shaders right in the browser. By default, each channel can be set to some internal Shadertoy texture or none at all.
 
-```math
-\text{offset\_uv} 
-= \text{uv} 
-+ \text{iTime} \cdot \text{velocity} 
-+ \text{positional\_offset}
-```
+### 2.1 Creating or Editing a Shader
+1. Go to [https://www.shadertoy.com](https://www.shadertoy.com).
+2. Sign in (or create an account) if you want to save or edit shaders.
+3. Create a new shader or open an existing one you own. In the code editor on Shadertoy, you’ll see code referencing channels as `iChannel0`, `iChannel1`, `iChannel2`, etc.
 
-### 3.2. Sampling and Dim Factor
+### 2.2 Updating the Channel Textures
+1. Look at the **Shader Inputs** panel (usually on the left side or in a tab below the main editor). Each channel (0, 1, 2, 3) has a dropdown for texture type.  
+2. Select a preset Shadertoy texture, or choose **“None”** if you do not want to use that channel.  
+3. For displacement maps, you can choose from Shadertoy’s default library. For example, there might be a noise or a cloudy texture you can select. 
+4. If you have a **Pro** (paid) Shadertoy account, you can upload your own custom textures. Otherwise, you’ll rely on the default library.  
 
-The `sample_disp_map(...)` function reads the **red** channel **R** from the texture at `offset_uv` and scales it by an intensity factor. For example, noise maps might use `0.33`, caustics maps `0.22`, etc. Formally:
+### 2.3 Considerations
+- **Single-Channel vs. Full Color**  
+  Shadertoy typically provides color textures in RGBA. In this shader, the red channel (`.r`) is used to read displacement intensity. If you choose a color texture, it will work, but just the `.r` component is what’s effectively used as the displacement “height.”
+- **Default Texture Dimensions**  
+  Shadertoy’s default textures vary in size but are typically large enough (e.g., 512×512 or 1024×1024). The shader only depends on reading normalized `uv` coordinates, so the physical resolution is not strictly an issue.  
 
-```math
-\text{disp\_value} = \text{texture}(tex, \text{offset\_uv}).r
-```
-```math
-\text{scaled\_disp} = \text{disp\_value} \times \text{intensity\_factor}
-```
+---
 
-Then the shader packs this as an RGBA vector:
+## 3. Notes on the Current Shader Configuration
 
-```math
-(\text{scaled\_disp},\, \text{scaled\_disp},\, \text{scaled\_disp},\, 1.0)
-```
+1. **Texture Channels**  
+   - **iChannel0**: Grayscale noise displacement map(s) stored in red channel.  
+   - **iChannel1**: Background image (full color).  
+   - **iChannel2**: Grayscale caustics displacement map(s) stored in red channel.
 
-## 4. Summing Displacement Map Intensities
+2. **Current Dimensions (as defined in the example)**  
+   ```glsl
+   #define VIRTUAL_DS_RES_X 256.0
+   #define VIRTUAL_DS_RES_Y 192.0
+   ```
+   - These define a virtual (pixelated) resolution. It’s used by the `pixelate_uv` function (if `PIXELATE_UV` is enabled) to produce a retro “pixel” effect. You can adjust these numbers to get different pixelation.
 
-Two noise maps and two caustics maps are sampled. We look only at their **red** channels (since everything is effectively grayscale):
+3. **Dimming Factors**  
+   ```glsl
+   #define NOISE_DISP_MAP_DIMMING_FACTOR    0.33
+   #define CAUSTICS_DISP_MAP_DIMMING_FACTOR 0.22
+   ```
+   - These scale down the brightness from the red channel. If your textures are too bright or too dark, adjust these to refine how strong the displacement effect appears.
 
-- **Noise Sum:**
+4. **Opacity Thresholds**  
+   ```glsl
+   #define NOISE_DISP_INDUCED_INTENSITY_THRESHOLD   0.30
+   #define ALL_DISP_MAP_INDUCED_INTENSITY_THRESHOLD 0.75
+   ```
+   - These thresholds drive the final alpha/opacity in the water effect. Feel free to experiment: lower them for more pronounced “peaks,” or raise them for a subtler effect.
 
-```math
-\text{noise\_disp\_sum} 
-= \text{noise\_disp\_map\_1}.r + \text{noise\_disp\_map\_2}.r
-```
+---
 
-- **All Maps Sum (noise + caustics):**
-
-```math
-\text{all\_disp\_sum} 
-= \text{noise\_disp\_sum}
- + \text{caustics\_disp\_map\_1}.r
- + \text{caustics\_disp\_map\_2}.r
-```
-
-## 5. Computing the Opacity
-
-
-
-```math
-\alpha =
-\begin{cases}
-  \text{FULL\_ALPHA}, & \text{if } \text{all\_disp\_sum} > \text{ALL\_DISP\_MAP\_INDUCED\_INTENSITY\_THRESHOLD}, \\
-  \text{NORMAL\_ALPHA}, & \text{else if } \text{noise\_disp\_sum} > \text{NOISE\_DISP\_INDUCED\_INTENSITY\_THRESHOLD}, \\
-  \text{BLURRY\_ALPHA}, & \text{otherwise}.
-\end{cases}
-```
-
-## 6. Background Texture Warping
-
-When we sample the background (`iChannel1`), we optionally warp the UV by the displacement map to create a subtle shifting effect:
-
-```math
-\text{warped\_bg\_uv} 
-= \text{uv} 
-+ \bigl(\text{disp\_map}.r \times \text{warp\_factor}\bigr)
-```
-
-We then fetch the background texture with:
-
-```math
-\text{background} 
-= \text{texture}(\text{iChannel1}, \text{warped\_bg\_uv})
-```
-
-## 7. Final Color
-
-We combine the displaced noise maps (scaled by `alpha`) on top of the warped background:
-
-```math
-\text{frag\_color} 
-= (\text{noise\_disp\_map\_1} + \text{noise\_disp\_map\_2}) \times \alpha 
-+ \text{background}
-```
-
-This accumulates the grayscale displacement contributions in RGB and blends them with the background according to the computed opacity.
-
-Resources:
-https://www.youtube.com/watch?v=8rCRsOLiO7k - displacement mapping essay
-https://www.shadertoy.com/view/wdG3Rz - original inspiration in shadertoy
+## 4. Summary
+- **If you want an easy, immediate environment:** Shadertoy.com is the fastest way to experiment—just paste the shader code, set your channels (noise, background, etc.), and tweak away.  
+- **If you want custom textures locally:** Install the VSCode Shader Toy extension, place your images in the project folder, and update the `#iChannelN "file://"` paths accordingly. This gives full control over which textures are used in each channel.
