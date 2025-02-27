@@ -2,10 +2,10 @@
 
 // debug macros
 //#define PIXELATE_UV
-#define SHOW_NOISE_DISP_MAP_1
-#define SHOW_NOISE_DISP_MAP_2
-#define SHOW_CAUSTICS_DISP_MAP_1
-#define SHOW_CAUSTICS_DISP_MAP_2
+//#define SHOW_NOISE_DISP_MAP_1
+//#define SHOW_NOISE_DISP_MAP_2
+//#define SHOW_CAUSTICS_DISP_MAP_1
+//#define SHOW_CAUSTICS_DISP_MAP_2
 #define SHOW_BACKGROUND
 
 vec4 sample_disp_map(sampler2D tex, vec2 uv, vec2 velocity, vec2 positional_offset, float intensity_factor);
@@ -145,15 +145,49 @@ vec4 sample_disp_map(
 vec4 sample_background_with_disp_map(
     sampler2D tex, 
     vec2 uv, 
-    vec4 disp_map, 
+    vec4 disp_map,      // (unused here, but kept for function signature compatibility)
     float warp_factor
 ) {
-    vec2 bg_uv = uv + (disp_map.r * warp_factor);
-    float ripple = texture(iChannel3, uv).r;
-    bg_uv += ripple;// * 0.05; // TODO: why the hell would i have a constant here, i want all the scaling to happen in the buffer
+    // 1. Sample neighbors from iChannel3 (the wave buffer) to build a normal.
+    //    We'll interpret 'up/left/right/down' around the current UV by +/- 1 pixel.
+    vec3 e = vec3(1.0 / iResolution.xy, 0.0);
+    float p10 = texture(iChannel3, uv - e.zy).r; // up
+    float p01 = texture(iChannel3, uv - e.xz).r; // left
+    float p21 = texture(iChannel3, uv + e.xz).r; // right
+    float p12 = texture(iChannel3, uv + e.zy).r; // down
 
-    return texture(tex, bg_uv);
+    // 2. Construct a 3D normal: 
+    //    X = right-left, Y = down-up, Z=1 (slight upward tilt, so we can do simple lighting).
+    vec3 grad = normalize(vec3(p21 - p01, p12 - p10, 1.0));
+    
+    // 3. Sample the background texture with an offset based on 'grad.xy'.
+    //    In the original “example main,” they used:
+    //       fragCoord.xy * 2.0 / iChannelResolution[1].xy + grad.xy * 0.35
+    //
+    //    Here, fragCoord.xy == uv * iResolution.xy
+    //    So baseUV = (uv * iResolution.xy * 2.0 / iChannelResolution[1].xy) + (grad.xy * warp_factor).
+    vec2 baseUV = uv * iResolution.xy * 2.0 / iChannelResolution[1].xy 
+                  + grad.xy;// * warp_factor;
+
+    // 4. Fetch the color from the background texture.
+    vec4 c = texture(tex, baseUV);
+
+    // 5. Simple lighting: diffuse + specular
+    vec3 lightDir = normalize(vec3(0.2, -0.5, 0.7));
+    float diffuse = dot(grad, lightDir);
+    // Reflect the incoming light around the normal, measure how “back-facing” it is for specular:
+    float spec = pow(max(0.0, -reflect(lightDir, grad).z), 32.0);
+
+    // 6. Combine color, add a soft tint, multiply by diffuse, and add spec.
+    //    The example mixes 'c' with a sky color, then multiplies by diffuse, plus spec highlight.
+    vec4 finalColor = mix(c, vec4(0.7, 0.8, 1.0, 1.0), 0.25) 
+                      * max(diffuse, 0.0)
+                      + spec;
+
+    return finalColor;
 }
+
+
 
 float compute_effective_opacity(
     vec4 noise_disp_map_1, 

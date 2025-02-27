@@ -5,7 +5,10 @@
 #iChannel1 "file://../textures/rocks.jpg"            // background texture (full-color)
 #iChannel2 "file://../textures/pebbles.png"          // caustics displacement map (stored in red channel)
 //#iChannel3 "file://ripple_buffer.glsl" //TODO: this is insane and is the only one that works
-#iChannel3 "file://impulse_delay_buffer.glsl" //TODO: this one is also insane but i just need to learn the math better
+//#iChannel3 "file://impulse_delay_buffer.glsl" //TODO: this one is also insane but i just need to learn the math better
+//#iChannel3 "file://1_ripple_height_buffer.glsl" //TODO: this is insane, the height buffer is the true most recent frame?
+#iChannel3 "file://buffer_a.glsl" //TODO: this is insane, the height buffer is the true most recent frame?
+
 
 #define VIRTUAL_DS_RES_X 256.0 // Virtual display resolution width for DS resolution; recommended range: 128.0–1024.0.
 #define VIRTUAL_DS_RES_Y 192.0 // Virtual display resolution height for DS resolution; recommended range: 128.0–1024.0.
