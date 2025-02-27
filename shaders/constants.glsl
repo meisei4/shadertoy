@@ -4,6 +4,7 @@
 #iChannel0 "file://../textures/gray_noise_small.png" // noise displacement map (stored in red channel)
 #iChannel1 "file://../textures/rocks.jpg"            // background texture (full-color)
 #iChannel2 "file://../textures/pebbles.png"          // caustics displacement map (stored in red channel)
+#iChannel3 "file://ripple_buffer.glsl"
 
 #define VIRTUAL_DS_RES_X 256.0 // Virtual display resolution width for DS resolution; recommended range: 128.0–1024.0.
 #define VIRTUAL_DS_RES_Y 192.0 // Virtual display resolution height for DS resolution; recommended range: 128.0–1024.0.
