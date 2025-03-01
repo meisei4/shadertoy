@@ -1,11 +1,13 @@
-#include "constants.glsl"
+#include "/shaders/common/constants.glsl"
+
+#iChannel3 "file://shaders/buffers/finite_approx_ripple_buffer.glsl"
 
 // debug macros
 //#define PIXELATE_UV
 #define SHOW_NOISE_DISP_MAP_1
-//#define SHOW_NOISE_DISP_MAP_2
-//#define SHOW_CAUSTICS_DISP_MAP_1
-//#define SHOW_CAUSTICS_DISP_MAP_2
+#define SHOW_NOISE_DISP_MAP_2
+#define SHOW_CAUSTICS_DISP_MAP_1
+#define SHOW_CAUSTICS_DISP_MAP_2
 #define SHOW_BACKGROUND
 
 vec4 sample_disp_map(sampler2D tex, vec2 uv, vec2 velocity, vec2 positional_offset, float intensity_factor);
@@ -80,54 +82,6 @@ void mainImage(out vec4 frag_color, in vec2 frag_coord) {
     frag_color = (noise_disp_map_1 + noise_disp_map_2) * alpha + background;
 }
 
-void main() {
-    mainImage(gl_FragColor, gl_FragCoord.xy);
-}
-
-/*
-Caustic Effect Domain & Displacement Map Sampling Summary:
-
-1. Displacement Map Sampling & Darkening:
-   Each texture pixel is an RGBA vector:
-       ┌─────┐
-       │  R  │
-       │  G  │
-       │  B  │
-       │  A  │
-       └─────┘
-   For our grayscale textures:
-       R = G = B,  A = 1.0,  with R ∈ [0, 1].
-
-   The function sample_disp_map() samples the red channel and applies a darkening (dimming) factor:
-     - For noise maps: fₙ = 0.33, so the effective red value is R_effective = R · 0.33, meaning R_effective ∈ [0, 0.33].
-     - For caustics maps: f_c = 0.22, so the effective red value is R_effective = R · 0.22, meaning R_effective ∈ [0, 0.22].
-
-2. Intensity Calculation per Displacement Map:
-   • Noise Displacement Maps:
-       - Two noise maps are used.
-       - For a given pixel, let:
-           R₁ ∈ [0, 0.33]  (from noise map 1)
-           R₂ ∈ [0, 0.33]  (from noise map 2)
-       - Their combined intensity is:
-           I_noise = R₁ + R₂,  with I_noise ∈ [0, 0.66].
-
-   • Caustics Displacement Maps:
-       - Two caustics maps are used.
-       - For a given pixel, let:
-           C₁ ∈ [0, 0.22]  (from caustics map 1)
-           C₂ ∈ [0, 0.22]  (from caustics map 2)
-       - Their combined intensity is:
-           I_caustics = C₁ + C₂,  with I_caustics ∈ [0, 0.44].
-
-3. Total Intensity & Thresholds:
-   - The overall effective intensity is the sum of noise and caustics contributions:
-         I_total = I_noise + I_caustics,  with I_total ∈ [0, 1.10].
-
-   - This intensity determines the final opacity:
-         • If I_noise > NOISE_DISP_INDUCED_INTENSITY_THRESHOLD (e.g., 0.30), use NORMAL_ALPHA.
-         • If I_total > ALL_DISP_MAP_INDUCED_INTENSITY_THRESHOLD (e.g., 0.75), use FULL_ALPHA.
-         • Otherwise, use BLURRY_ALPHA.
-*/
 
 vec4 sample_disp_map(
     sampler2D tex, 
@@ -144,29 +98,27 @@ vec4 sample_disp_map(
 
 vec4 sample_background_with_disp_map(
     sampler2D tex, 
-    vec2 uv, 
+    vec2 uv,       
     vec4 disp_map, 
-    float warp_factor
+    float warp_factor 
 ) {
-    // Sample the height from the PDE height buffer.
-    float h = texture(iChannel3, uv).r;
+    float height = texture(iChannel3, uv).r;
     
-    // Use central differences for the gradient.
-    vec2 pixel = 1.0 / iResolution.xy;
-    float hRight = texture(iChannel3, uv + vec2(pixel.x, 0.0)).r;
-    float hLeft  = texture(iChannel3, uv - vec2(pixel.x, 0.0)).r;
-    float hUp    = texture(iChannel3, uv + vec2(0.0, pixel.y)).r;
-    float hDown  = texture(iChannel3, uv - vec2(0.0, pixel.y)).r;
+    // TODO: Compute normal vector using finite differences in the X and Y directions????????
+    vec3 normal = normalize(vec3(
+        texture(iChannel3, uv + vec2(NORMAL_SAMPLE_OFFSET, 0.0)).r - texture(iChannel3, uv - vec2(NORMAL_SAMPLE_OFFSET, 0.0)).r, 
+        texture(iChannel3, uv + vec2(0.0, NORMAL_SAMPLE_OFFSET)).r - texture(iChannel3, uv - vec2(0.0, NORMAL_SAMPLE_OFFSET)).r, 
+        2.0 * NORMAL_SAMPLE_OFFSET
+    ));
+
+    // TODO: Compute the UV offset using refractive displacement??????
+    vec2 refracted_offset = refract(vec3(0.0, 0.0, -1.0), normal, REFRACTION_INDEX_RATIO).xy;
+
+    vec2 bg_uv = uv + refracted_offset * warp_factor;
     
-    // Compute a central-difference gradient.
-    vec2 gradient = vec2(hRight - hLeft, hUp - hDown);
-    
-    // Optionally, scale or clamp the gradient to control the effect.
-    float gradientScale = warp_factor; // use warp_factor (e.g., 0.05) to control displacement strength.
-    vec2 displacedUV = uv + gradient * gradientScale;
-    
-    return texture(tex, displacedUV);
+    return texture(tex, bg_uv);
 }
+
 
 float compute_effective_opacity(
     vec4 noise_disp_map_1, 

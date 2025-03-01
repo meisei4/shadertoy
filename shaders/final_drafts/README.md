@@ -1,4 +1,4 @@
-## MATH
+## MATH FOR water_caustics_01.glsl vanilla
 
 ## 1. Converting Fragment Coordinates to UV
 

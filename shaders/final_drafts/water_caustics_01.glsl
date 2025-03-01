@@ -1,4 +1,4 @@
-#include "constants.glsl"
+#include "/shaders/common/constants.glsl"
 
 // debug macros
 //#define PIXELATE_UV
