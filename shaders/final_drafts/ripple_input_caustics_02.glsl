@@ -4,10 +4,10 @@
 
 // debug macros
 //#define PIXELATE_UV
-#define SHOW_NOISE_DISP_MAP_1
-#define SHOW_NOISE_DISP_MAP_2
-#define SHOW_CAUSTICS_DISP_MAP_1
-#define SHOW_CAUSTICS_DISP_MAP_2
+//#define SHOW_NOISE_DISP_MAP_1
+//#define SHOW_NOISE_DISP_MAP_2
+//#define SHOW_CAUSTICS_DISP_MAP_1
+//#define SHOW_CAUSTICS_DISP_MAP_2
 #define SHOW_BACKGROUND
 
 vec4 sample_disp_map(sampler2D tex, vec2 uv, vec2 velocity, vec2 positional_offset, float intensity_factor);
@@ -82,7 +82,6 @@ void mainImage(out vec4 frag_color, in vec2 frag_coord) {
     frag_color = (noise_disp_map_1 + noise_disp_map_2) * alpha + background;
 }
 
-
 vec4 sample_disp_map(
     sampler2D tex, 
     vec2 uv, 
@@ -118,7 +117,6 @@ vec4 sample_background_with_disp_map(
     
     return texture(tex, bg_uv);
 }
-
 
 float compute_effective_opacity(
     vec4 noise_disp_map_1, 

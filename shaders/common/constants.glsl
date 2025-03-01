@@ -8,16 +8,8 @@
     #iChannel2 "file://assets/textures/pebbles.png"           // caustics displacement map (red channel)
 #endif
 
-//FINITE APPOX CONSTANTS:
-#define BASE_HEIGHT 0.0 // Equilibrium height of the water surface. Domain: ℝ, Units: Height units. Controls the baseline water level.
-#define DAMPING_FACTOR 0.98 // Energy retention per frame. Domain: (0,1] ⊂ ℝ, Units: Scalar multiplier. Higher = longer-lasting waves.
-#define SAMPLE_OFFSET_DISTANCE 5e-3 // Neighbor sampling offset. Domain: ℝ⁺, Units: UV space [0,1]. Smaller = sharper waves, larger = smoother
-#define MOUSE_IMPACT_SCALAR -0.015 // Mouse displacement strength. Domain: ℝ, Units: Height units/frame. Negative = depression, positive = bump
-#define MOUSE_INNER_RADIUS 0.01 // Inner radius of mouse effect. Domain: ℝ⁺, Units: UV distance. Inside this, displacement is full strength.
-#define MOUSE_OUTER_RADIUS 0.045 // Outer radius of mouse effect. Domain: ℝ⁺, Units: UV distance. Beyond this, displacement fades to zero
 #define NORMAL_SAMPLE_OFFSET 1e-4 // Normal sampling offset for finite difference computation. Domain: ℝ⁺, Units: UV space.
 #define REFRACTION_INDEX_RATIO (1.0 / 1.333) // Refractive index ratio (air to water). Domain: ℝ⁺, Units: Scalar. Determines how much light bends
-#define WARP_FACTOR 0.00008 // Maximum UV displacement. Domain: ℝ, Units: UV space. Scales the refracted displacement.
 
 //CAUSTIC CONSTANTS:
 #define VIRTUAL_DS_RES_X 256.0 // Virtual display resolution width for DS resolution; recommended range: 128.0–1024.0.
