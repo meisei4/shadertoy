@@ -3,11 +3,11 @@
 #iChannel3 "file://shaders/buffers/finite_approx_ripple_buffer.glsl"
 
 // debug macros
-//#define PIXELATE_UV
-//#define SHOW_NOISE_DISP_MAP_1
-//#define SHOW_NOISE_DISP_MAP_2
-//#define SHOW_CAUSTICS_DISP_MAP_1
-//#define SHOW_CAUSTICS_DISP_MAP_2
+#define PIXELATE_UV
+#define SHOW_NOISE_DISP_MAP_1
+#define SHOW_NOISE_DISP_MAP_2
+#define SHOW_CAUSTICS_DISP_MAP_1
+#define SHOW_CAUSTICS_DISP_MAP_2
 #define SHOW_BACKGROUND
 
 vec4 sample_disp_map(sampler2D tex, vec2 uv, vec2 velocity, vec2 positional_offset, float intensity_factor);
