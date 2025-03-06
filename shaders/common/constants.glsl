@@ -8,8 +8,8 @@
     #iChannel2 "file://assets/textures/pebbles.png"           // caustics displacement map (red channel)
 #endif
 
-#define NORMAL_SAMPLE_OFFSET 1e-4 // Normal sampling offset for finite difference computation. Domain: ℝ⁺, Units: UV space.
-#define REFRACTION_INDEX_RATIO (1.0 / 1.333) // Refractive index ratio (air to water). Domain: ℝ⁺, Units: Scalar. Determines how much light bends
+//#define NORMAL_SAMPLE_OFFSET 1e-4 // Normal sampling offset for finite difference computation. Domain: ℝ⁺, Units: UV space.
+//#define REFRACTION_INDEX_RATIO (1.0 / 1.333) // Refractive index ratio (air to water). Domain: ℝ⁺, Units: Scalar. Determines how much light bends
 
 //CAUSTIC CONSTANTS:
 #define VIRTUAL_DS_RES_X 256.0 // Virtual display resolution width for DS resolution; recommended range: 128.0–1024.0.
@@ -27,7 +27,7 @@
 
 #define NOISE_DISP_MAP_DIMMING_FACTOR    0.33 // dims the noise texture -> maximum brightness becomes 1/3 where raw = 1.0 (would be white)
 #define CAUSTICS_DISP_MAP_DIMMING_FACTOR 0.22 // dims the caustics texture -> maximum brightness becomes 2/9 where raw = 1.0 (would be white)
-#define BACKGROUND_DISP_WARP_FACTOR      0.05 // simple warp factor for applying displacement map to background texture
+#define BACKGROUND_DISP_WARP_FACTOR      0.05 // simple warp factor for applying height and displacement map to background texture
 
 #define BLURRY_ALPHA 0.4 // 40% opacity -> grey overtone (trough areas surrounding the inclining undulations)
 #define NORMAL_ALPHA 0.0 // effectively the dark inclines in a wave undulation

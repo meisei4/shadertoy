@@ -2,11 +2,11 @@
 #iChannel0 "self"
 //IDEAL ADJUSTABLE PARAMETERS:
 //EFFECTIVE DOMAIN: [0.5, 20.0] UNITS: multiplier against base 1.0 size (percentage of screen resolution)
-#define RIPPLE_SCALE 0.5 // to scale the size of the ripple
+#define RIPPLE_SCALE 0.25 // to scale the size of the ripple
 //EFFECTIVE DOMAIN: [0.1, 1.0] UNITS: multiplier against base 1x speed
 #define SPEED_FACTOR 1.0 // to slow down ripple
 //EFFECTIVE DOMAIN: [-0.34, 1.0] TRY -0.34 to break things,
-#define PROPAGATION_INTENSITY -0.2 //to speed up the ripple
+#define PROPAGATION_INTENSITY -0.1 //to speed up the ripple
 //EFFECTIVE DOMAIN: [0.025, 0.5], UNITS: percentage of canvas resolution
 #define IMPULSE_WAVE_WIDTH 0.025 //to adjust the wave front width
 
@@ -80,7 +80,7 @@ void mainImage(out vec4 frag_color, in vec2 frag_coord) {
         advection = dot(mouse_direction, gradient);
     }
     //TODO: MAKE THIS SCALE WITH THE DAMPENING!!!
-    new_height += -0.08 * advection;
+    new_height += -0.075 * advection;
     frag_color = vec4(new_height, prev_heights.r, mouse_position.x, mouse_position.y);
 }
 
