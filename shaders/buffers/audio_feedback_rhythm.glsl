@@ -31,26 +31,42 @@ float compute_audio_amplitude(float frequency_start, float frequency_end, int nu
 vec4 render_eq_bar(float normalized_y, float section_relative_x, int bar_count, float freq_min, float freq_max, int sample_count, vec4 bar_color);
 vec4 render_eq(vec2 uv);
 
-void mainImage(out vec4 fragColor, in vec2 fragCoord) {
+void mainImage(out vec4 fragColor, in vec2 fragCoord){
+    // Normalize coordinates
     vec2 uv = fragCoord.xy / iResolution.xy;
-    float current_overall = compute_audio_amplitude(0.0, 1.0, 32);
     
-    // Retrieve the previous history from iChannel1:
-    //   prev.r = amplitude from one frame ago
-    //   prev.g = amplitude from two frames ago
-    //   prev.b = amplitude from three frames ago
-    //   prev.a = amplitude from four frames ago
-    vec4 prev = texture(iChannel0, vec2(0.5, 0.5));
-    // Shift the history:
-    // R = current amplitude, G = last frame’s R, B = last frame’s G, A = last frame’s B.
+    vec2 history_coord = vec2(0.995, 0.995); // or 0.99, 0.99, etc.
+    vec4 prev = texture(iChannel0, history_coord);
+    
+    // Because we stored: R= current amplitude, G= old R, B= old G, A= old B
+    // last frame, we can now shift to get new history:
+    float current_overall = compute_audio_amplitude(0.0, 1.0, 16);
     vec4 history = vec4(current_overall, prev.r, prev.g, prev.b);
     
+    //store history data in the top right fragment of the shader
+    if (uv.x >= 0.99 && uv.y >= 0.99) {
+        // This pixel becomes our "data storage" for next frame
+        fragColor = history;
+        return;
+    }
     if (uv.x >= EQ_AREA_END_X) {
-        // Fetch the four frames of amplitudes (current + 3 previous)
-        // For a simple smoothing, average all four:
+        // 1) Smooth over 4 frames:
         float smoothed = (history.r + history.g + history.b + history.a) / 4.0;
-        // Draw a white bar whose height is smoothed amplitude
-        fragColor = (uv.y < smoothed) ? WHITE : vec4(0.0);
+
+        // 2) Convert amplitude to decibels in [minDB..maxDB], then clamp:
+        float amplitude = clamp(smoothed, 1e-6, 1.0);
+        float dB        = 20.0 * log(amplitude);
+
+        float min_dB         = -35.0;
+        float max_dB         = 0.0;
+        float normalized_DB  = (dB - min_dB) / (max_dB - min_dB);
+        normalized_DB        = clamp(normalized_DB, 0.0, 1.0);
+
+        // 3) Apply an S-curve (logistic) to exaggerate mid-range changes:
+        float alpha   = 40.0; 
+        float s_value  = 1.0 / (1.0 + exp(-alpha * (normalized_DB - 0.5)));
+        float bar_height = s_value;
+        fragColor = (uv.y < bar_height) ? WHITE : vec4(0.0);
     } else {
         fragColor = render_eq(uv);
     }

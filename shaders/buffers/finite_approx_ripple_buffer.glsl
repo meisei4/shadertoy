@@ -1,5 +1,6 @@
 #include "/shaders/common/constants.glsl"
 #iChannel0 "self"
+#iChannel1 "file://shaders/buffers/audio_feedback_rhythm.glsl"
 
 //IDEAL ADJUSTABLE PARAMETERS:
 //EFFECTIVE DOMAIN: [0.5, 20.0] UNITS: multiplier against base 1.0 size (percentage of screen resolution)
@@ -7,7 +8,7 @@
 //EFFECTIVE DOMAIN: [0.1, 1.0] UNITS: multiplier against base 1x speed
 #define SPEED_FACTOR 1.0 // to slow down ripple
 //EFFECTIVE DOMAIN: [-0.34, 1.0] TRY -0.34 to break things,
-#define PROPAGATION_INTENSITY -0.1 //to speed up the ripple
+#define PROPAGATION_INTENSITY -0.0 //to speed up the ripple
 //EFFECTIVE DOMAIN: [0.025, 0.5], UNITS: percentage of canvas resolution
 #define IMPULSE_WAVE_WIDTH 0.025 //to adjust the wave front width
 
@@ -54,7 +55,6 @@ void mainImage(out vec4 frag_color, in vec2 frag_coord) {
     vec2 mouse_position = iMouse.xy / iResolution.xy;
     vec2 prev_mouse_position = texture(iChannel0, uv).ba;
     float mouse_impulse = 0.0;
-    float wake_smoaothing_factor = 0.0;
     
     if (iMouse.z > 0.0) {
         //BASIC
@@ -69,7 +69,6 @@ void mainImage(out vec4 frag_color, in vec2 frag_coord) {
         //LINE AND WAVEFRONT merge attempt
         //mouse_impulse = compute_combined_impulse(uv, mouse_position, prev_mouse_position);
     }
-
     float avg_neighbor_height = (height_left + height_right + height_top + height_bottom) / 4.0;
     float new_height = prev_heights.r + EFFECTIVE_PROPAGATION * (avg_neighbor_height - prev_heights.g);
     new_height *= EFFECTIVE_DAMPENING;
@@ -98,7 +97,7 @@ float compute_wavefront(vec2 uv, vec2 mouse_position, vec2 prev_mouse_position) 
     float audio_factor = get_audio_scale_factor();
     float audio_effective_inner_radius = IMPULSE_INNER_RADIUS * audio_factor;
     float audio_effective_outer_radius = IMPULSE_OUTER_RADIUS * audio_factor;
-    float radial_impulse = BASE_IMPULSE_STRENGTH * smoothstep(audio_effective_outer_radius, audio_effective_inner_radius, uv_distance_from_mouse);
+    float radial_impulse = audio_factor * BASE_IMPULSE_STRENGTH * smoothstep(audio_effective_outer_radius, audio_effective_inner_radius, uv_distance_from_mouse);
     vec2 mouse_velocity = mouse_position - prev_mouse_position;
     float movement = length(mouse_velocity);
     float directional_factor = 1.0;
@@ -113,27 +112,24 @@ float compute_wavefront(vec2 uv, vec2 mouse_position, vec2 prev_mouse_position) 
 }
 
 float get_audio_scale_factor(){
-    // [1] freq_bin: picking which frequency bin of the FFT to sample in [0..1].
-    //     - 0.0  ~  "lowest frequencies"  (deep bass)
-    //     - 0.5  ~  "midrange"
-    //     - 1.0  ~  "highest frequencies" (treble)
-    //     If you want deeper bass detection, try a smaller number, e.g. 0.01..0.05
-    float freq_bin = 0.05; 
+    vec2 history_coord = vec2(0.995, 0.995); //JESUS THIS IS INSANE
+    vec4 rhythm_heights = texture(iChannel1, history_coord);
+    float smoothed = (rhythm_heights.r + rhythm_heights.g + rhythm_heights.b + rhythm_heights.a) / 4.0;
+    float amplitude = clamp(smoothed, 1e-6, 1.0);
+    float dB        = 20.0 * log(amplitude);
+    float min_dB         = -35.0;
+    float max_dB         = 0.0;
+    float normalized_DB  = (dB - min_dB) / (max_dB - min_dB);
+    normalized_DB        = clamp(normalized_DB, 0.0, 1.0);
+    float alpha   = 40.0; 
+    float s_value  = 1.0 / (1.0 + exp(-alpha * (normalized_DB - 0.5)));
+    float bar_height = s_value;
 
-    // [2] Sample the top row (y=0.0) at x=freq_bin in iChannel1.
-    //     The .r channel contains the FFT magnitude for that freq bin.
-    float sum_bass = 0.0;
-    int steps = 8; // how many bins we sample in 0..0.08
-    for (int i = 0; i < steps; i++) {
-        float f = (float(i) + 0.5) / float(steps) * 0.08; 
-        sum_bass += texture(iChannel1, vec2(f, 0.0)).r;
-    }
-    sum_bass /= float(steps); 
-    float clamped_bass = clamp(sum_bass * 10.0, 0.0, 1.0); 
-    float audio_factor = mix(1.0, 4.0, clamped_bass);
-    return audio_factor;
+    // We want f(0.75)=4 => Solve B^0.75=4 => B=4^(1/0.75)= about 6.349
+    float B = 6.349;  
+    return 1.5 * pow(B, bar_height);  // Then factor(0.75)=4
+    // That means factor(1.0)=6.349, factor(0.0)=1.0, etc.}
 }
-
 
 
 ///BELOW IS UNUSED REFERENCES FOR mouse displacement smoothing, if needed
