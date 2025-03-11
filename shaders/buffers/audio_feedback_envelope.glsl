@@ -1,20 +1,20 @@
 #include "/shaders/common/audio_plotting.glsl"
-#iChannel0 "file://assets/audio/Hellion_v2.ogg"
-#iChannel1 "self"
+#iChannel0 "self" //TODO: FEEDBACK BUFFERS ONLY EVER WORK ON CHANNEL0!!!!!!!1
+#iChannel1 "file://assets/audio/Hellion_v2.ogg"
+//#iChannel2 "file://assets/audio/experiment.mp3"
 #define WAVEFORM_SAMPLE_COUNT 512
 
 float uUpdateInterval = 10.0;    // e.g. 15.0 for more frequent updates.
-float uEnvelopeSmoothing = 0.4; // e.g. 0.3 to 0.5 for moderate smoothing.
+float uEnvelopeSmoothing = 0.2; // e.g. 0.3 to 0.5 for moderate smoothing.
 
-// Calculate how many waveform samples fall into one bin.
 int samplesPerBin = WAVEFORM_SAMPLE_COUNT / NUM_BINS;
 
 // Computes the average absolute amplitude for a given bin.
 float sampleWaveformEnvelope(int binIndex) {
     float sumAmplitude = 0.0;
     for (int i = 0; i < samplesPerBin; i++) {
-        float sampleX = (float(binIndex * samplesPerBin + i) + 0.5) / float(WAVEFORM_SAMPLE_COUNT);
-        float sampleVal = texture(iChannel0, vec2(sampleX, 1.0)).r;
+        float sampleX = float(binIndex * samplesPerBin + i) / float(WAVEFORM_SAMPLE_COUNT);
+        float sampleVal = texture(iChannel1, vec2(sampleX, 1.0)).r;
         sumAmplitude += abs(sampleVal);
     }
     return sumAmplitude / float(samplesPerBin);
@@ -22,7 +22,7 @@ float sampleWaveformEnvelope(int binIndex) {
 
 // Shifts the existing envelope history upward by one row.
 vec4 shiftEnvelopeHistory(vec2 uv, float rowHeight) {
-    return texture(iChannel1, uv + vec2(0.0, rowHeight));
+    return texture(iChannel0, uv + vec2(0.0, rowHeight));
 }
 
 void mainImage(out vec4 fragColor, in vec2 fragCoord) {
@@ -42,7 +42,7 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord) {
     
     int binIndex = int(floor(uv.x * float(NUM_BINS)));
     float newEnvelope = sampleWaveformEnvelope(binIndex);
-    float oldEnvelope = texture(iChannel1, uv).r;
+    float oldEnvelope = texture(iChannel0, uv).r;
     
     // Apply exponential smoothing: effectiveBlend = blendFactor scaled by uEnvelopeSmoothing.
     float effectiveBlend = blendFactor * uEnvelopeSmoothing;

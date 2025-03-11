@@ -1,5 +1,6 @@
 #include "/shaders/common/audio_plotting.glsl"
-#iChannel0 "file://shaders/buffers/audio_feedback_envelope.glsl"
+#iChannel0 "file://shaders/buffers/audio_feedback_envelope.glsl" //TODO: FEEDBACK BUFFERS ONLY EVER WORK ON CHANNEL0!!!!!!!1
+
 float lineRenderWidth = 0.75;
 
 float getEnvelopeFromBuffer(int historyRow, int binIndex) {

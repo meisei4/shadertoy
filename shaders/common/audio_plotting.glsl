@@ -1,15 +1,10 @@
-#ifndef COMMON_GLSL
-#define COMMON_GLSL
-
 #define NUM_BINS 64
 #define NUM_HISTORY_ROWS 5
 
-// Projection parameters:
-float amplitudeScale = 20.0;    // How much the envelope amplitude affects vertical displacement.
-float isometricZoom    = 6.0;     // Overall scaling of the projection.
+float amplitudeScale = 120.0;    // How much the envelope amplitude affects vertical displacement.
+float isometricZoom    = 5.0;     // Overall scaling of the projection.
 float rowSpacing       = 5.0;     // Controls the vertical gap between successive history rows.
 
-// --- Projection Functions ---
 // Projects a 3D envelope coordinate into 2D space.
 //   envCoord.x: bin index (0 .. NUM_BINS-1)
 //   envCoord.y: envelope amplitude [0..1]
@@ -40,7 +35,6 @@ vec2 computeEnvelopeGridCenter() {
     return (minCorner + maxCorner) * 0.5;
 }
 
-// --- Utility ---
 // Returns the distance from a pixel (screen coordinate) to a line segment.
 float distanceToLine(vec2 pixel, vec2 lineStart, vec2 lineEnd) {
     vec2 lineVec = lineEnd - lineStart;
@@ -51,4 +45,3 @@ float distanceToLine(vec2 pixel, vec2 lineStart, vec2 lineEnd) {
     return distance(pixel, closestPt);
 }
 
-#endif // COMMON_GLSL
