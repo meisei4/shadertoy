@@ -1,7 +1,7 @@
 #include "/shaders/common/audio_plotting.glsl"
 #iChannel0 "file://shaders/buffers/audio_feedback_envelope.glsl" // TODO: FEEDBACK BUFFERS ONLY EVER WORK ON CHANNEL0!!!!
 
-#define LINE_RENDER_MARGIN 0.50        // amount of thickness (in fragment size/single pixel) that surrounds both sides of the wave signal lines
+#define LINE_RENDER_MARGIN 0.5        // amount of thickness (in fragment size/single pixel) that surrounds both sides of the wave signal lines
 #define MAX_DISTANCE 1e6               // some stupid number to just initialize the min distance to closest wave signal logic
 
 #define WHITE vec4(1.0, 1.0, 1.0, 1.0)
@@ -12,6 +12,16 @@ bool is_frag_coord_within_wave_signal_line_margin(float min_distance_to_nearby_i
 float sample_wave_signal_from_envelope_buffer(float bin_index, float wave_signal_vertical_index);
 
 void mainImage(out vec4 frag_color, in vec2 frag_coord) {
+    float dist = min_distance_to_nearby_isometric_wave_signals(frag_coord);
+    // Use fwidth for adaptive anti-aliasing.
+    float aa = fwidth(dist);
+    // LINE_RENDER_MARGIN * 2.0 is the threshold, but smoothstep will blend within aa units.
+    float edge = smoothstep(LINE_RENDER_MARGIN * 4.0, LINE_RENDER_MARGIN * 4.0 - aa, dist);
+    frag_color = mix(BLACK, WHITE, edge);
+}
+
+
+void mainImage1(out vec4 frag_color, in vec2 frag_coord) {
     float min_distance_to_nearby_isometric_wave_signals = min_distance_to_nearby_isometric_wave_signals(frag_coord);
     if (is_frag_coord_within_wave_signal_line_margin(min_distance_to_nearby_isometric_wave_signals)){
         frag_color = WHITE; // draw the line white
