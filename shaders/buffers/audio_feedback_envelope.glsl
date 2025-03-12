@@ -14,9 +14,9 @@
 // EFFECTIVE DOMAIN: {1.0}
 #define WAVEFORM_DATA_COORD_Y 1.0 // fixed Y coordinate for sampling waveform data from audio texture
 // EFFECTIVE DOMAIN: [5.0, 20.0]
-#define UPDATE_INTERVAL_FRAMES 10.0 // number of frames per envelope line update, controls how fast the lines update across the isometric time dimension
+#define UPDATE_INTERVAL_FRAMES 1.0 // number of frames per envelope line update, controls how fast the lines update across the isometric time dimension
 // EFFECTIVE DOMAIN: [0.1, 1.0]
-#define ENVELOPE_SMOOTHING_FACTOR 0.2 // percent of how much of the newly ACCUMULATED amplitudes get applied to the "envelope" (line shapes) per history update
+#define ENVELOPE_SMOOTHING_FACTOR 1.0 // percent of how much of the newly ACCUMULATED amplitudes get applied to the "envelope" (line shapes) per history update
 
 #define AUDIO_BIN_SAMPLE_COUNT (TOTAL_WAVEFORM_SAMPLES / NUM_BINS) // how many waveform x-values are grouped together to form each bin’s envelope value 
 
@@ -45,6 +45,7 @@ vec4 sample_previous_wave_signal(vec2 uv, float wave_signal_vertical_index) {
     return texture(iChannel0, target_previous_wave_signal);
 }
 
+//TODO: refactor this to make sure that you have true control over the smoothness of the waves, and how fast they propagate in the history
 vec4 update_envelope_history(vec2 uv) {
     float iFrame_f = float(iFrame);
     float update_progress = mod(iFrame_f, UPDATE_INTERVAL_FRAMES) / UPDATE_INTERVAL_FRAMES;
