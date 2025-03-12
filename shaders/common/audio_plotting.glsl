@@ -1,47 +1,44 @@
-#define NUM_BINS 64
-#define NUM_HISTORY_ROWS 5
+#define NUM_BINS 64.0 // how to subdivide the 512 samples from the waveform data (effectively length of the wave signals data) 
+#define NUM_HISTORICAL_WAVE_SIGNAL_LINES 5.0 // how many wave signals to propagate a history for
+#define TOTAL_CANVAS_HEIGHT 1.0  //used for flipping the order of the lines
 
-float amplitudeScale = 120.0;    // How much the envelope amplitude affects vertical displacement.
-float isometricZoom    = 5.0;     // Overall scaling of the projection.
-float rowSpacing       = 5.0;     // Controls the vertical gap between successive history rows.
+//TODO: properly refactor this whole utility code so that things actually make sense and are customizable
+#define AMPLITUDE_SCALE 120.0    // scaling
+#define ISOMETRIC_ZOOM 4.0       // more scalling
+#define ROW_SPACING 5.0          // again.. a scaling thing
+#define HALF_SCREEN 0.5          // Constant 0.5 for centering calculations.
 
-// Projects a 3D envelope coordinate into 2D space.
-//   envCoord.x: bin index (0 .. NUM_BINS-1)
-//   envCoord.y: envelope amplitude [0..1]
-//   envCoord.z: history row (0 = newest, NUM_HISTORY_ROWS-1 = oldest)
-vec2 projectEnvelope(vec3 envCoord) {
-    float binIndex      = envCoord.x;
-    float envelopeValue = envCoord.y;
-    float historyRow    = envCoord.z;
-    float effectiveRow  = historyRow * rowSpacing;
+vec2 project(vec3 envelope_data) {
+    float bin_index = envelope_data.x;         
+    float envelope_value = envelope_data.y;    
+    float history_row = envelope_data.z;      
     
-    // Isometric projection:
-    //   X = binIndex - effectiveRow
-    //   Y = (binIndex + effectiveRow) * 0.5 - envelopeValue * amplitudeScale
-    float projX = binIndex - effectiveRow;
-    float projY = (binIndex + effectiveRow) * 0.5 - envelopeValue * amplitudeScale;
-    return vec2(projX, projY) * isometricZoom;
-}
-
-// Computes the center of the envelope grid (in projected space) for centering.
-vec2 computeEnvelopeGridCenter() {
-    vec2 projBottomLeft  = projectEnvelope(vec3(0.0, 0.0, 0.0));
-    vec2 projBottomRight = projectEnvelope(vec3(float(NUM_BINS - 1), 0.0, 0.0));
-    vec2 projTopLeft     = projectEnvelope(vec3(0.0, 1.0, float(NUM_HISTORY_ROWS - 1)));
-    vec2 projTopRight    = projectEnvelope(vec3(float(NUM_BINS - 1), 1.0, float(NUM_HISTORY_ROWS - 1)));
+    float effective_row = history_row * ROW_SPACING;
     
-    vec2 minCorner = min(min(projBottomLeft, projBottomRight), min(projTopLeft, projTopRight));
-    vec2 maxCorner = max(max(projBottomLeft, projBottomRight), max(projTopLeft, projTopRight));
-    return (minCorner + maxCorner) * 0.5;
+    float proj_x = bin_index - effective_row;
+    float proj_y = (bin_index + effective_row) * HALF_SCREEN - envelope_value * AMPLITUDE_SCALE;
+    
+    return vec2(proj_x, proj_y) * ISOMETRIC_ZOOM;
 }
 
-// Returns the distance from a pixel (screen coordinate) to a line segment.
-float distanceToLine(vec2 pixel, vec2 lineStart, vec2 lineEnd) {
-    vec2 lineVec = lineEnd - lineStart;
-    float lineLenSq = dot(lineVec, lineVec);
-    float t = dot(pixel - lineStart, lineVec) / lineLenSq;
-    float clampedT = clamp(t, 0.0, 1.0);
-    vec2 closestPt = lineStart + clampedT * lineVec;
-    return distance(pixel, closestPt);
+vec2 compute_envelope_grid_center() {
+    float num_bins_minus_one = NUM_BINS - 1.0;
+    float num_history_rows_minus_one = NUM_HISTORICAL_WAVE_SIGNAL_LINES - 1.0;
+    
+    vec2 proj_bottom_left  = project(vec3(0.0, 0.0, 0.0));
+    vec2 proj_bottom_right = project(vec3(num_bins_minus_one, 0.0, 0.0));
+    vec2 proj_top_left     = project(vec3(0.0, 1.0, num_history_rows_minus_one));
+    vec2 proj_top_right    = project(vec3(num_bins_minus_one, 1.0, num_history_rows_minus_one));
+    
+    vec2 min_corner = min(min(proj_bottom_left, proj_bottom_right), min(proj_top_left, proj_top_right));
+    vec2 max_corner = max(max(proj_bottom_left, proj_bottom_right), max(proj_top_left, proj_top_right));
+    
+    return (min_corner + max_corner) * HALF_SCREEN;
 }
 
+vec2 project_isometric(vec3 envelope_data) {
+    vec2 raw_proj    = project(envelope_data);
+    vec2 grid_center = compute_envelope_grid_center();
+    vec2 screen_center = iResolution.xy * HALF_SCREEN;
+    return raw_proj + (screen_center - grid_center);
+}
