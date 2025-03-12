@@ -1,7 +1,7 @@
 #include "/shaders/common/audio_plotting.glsl"
 #iChannel0 "file://shaders/buffers/audio_feedback_envelope.glsl" // TODO: FEEDBACK BUFFERS ONLY EVER WORK ON CHANNEL0!!!!
 
-#define LINE_RENDER_MARGIN 0.5        // amount of thickness (in fragment size/single pixel) that surrounds both sides of the wave signal lines
+#define LINE_RENDER_MARGIN 0.23        // amount of thickness (in fragment size/single pixel) that surrounds both sides of the wave signal lines
 #define MAX_DISTANCE 1e6               // some stupid number to just initialize the min distance to closest wave signal logic
 
 #define WHITE vec4(1.0, 1.0, 1.0, 1.0)
@@ -19,7 +19,6 @@ void mainImage(out vec4 frag_color, in vec2 frag_coord) {
     float edge = smoothstep(LINE_RENDER_MARGIN * 4.0, LINE_RENDER_MARGIN * 4.0 - aa, dist);
     frag_color = mix(BLACK, WHITE, edge);
 }
-
 
 void mainImage1(out vec4 frag_color, in vec2 frag_coord) {
     float min_distance_to_nearby_isometric_wave_signals = min_distance_to_nearby_isometric_wave_signals(frag_coord);

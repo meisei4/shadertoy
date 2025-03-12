@@ -1,11 +1,11 @@
-#define NUM_BINS 128.0 // how to subdivide the 512 samples from the waveform data (effectively length of the wave signals data) 
+#define NUM_BINS 64.0 // how to subdivide the 512 samples from the waveform data (effectively length of the wave signals data) 
 #define NUM_HISTORICAL_WAVE_SIGNAL_LINES 5.0 // how many wave signals to propagate a history for
 #define TOTAL_CANVAS_HEIGHT 1.0  //used for flipping the order of the lines
 
 //TODO: properly refactor this whole utility code so that things actually make sense and are customizable
 #define AMPLITUDE_SCALE 120.0    // scaling
 #define ISOMETRIC_ZOOM 3.0       // more scalling
-#define ROW_SPACING 8.0          // again.. a scaling thing
+#define ROW_SPACING 9.0          // again.. a scaling thing
 #define HALF_SCREEN 0.5          // Constant 0.5 for centering calculations.
 
 vec2 project(vec3 envelope_data) {
