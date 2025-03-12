@@ -10,7 +10,6 @@
 float min_distance_to_nearby_isometric_wave_signals(vec2 frag_coord);
 bool is_frag_coord_within_wave_signal_line_margin(float min_distance_to_nearby_isometric_wave_signals);
 float sample_wave_signal_from_envelope_buffer(float bin_index, float wave_signal_vertical_index);
-vec2 project_isometric(vec3 envelope_data);
 
 void mainImage(out vec4 frag_color, in vec2 frag_coord) {
     float min_distance_to_nearby_isometric_wave_signals = min_distance_to_nearby_isometric_wave_signals(frag_coord);
@@ -66,10 +65,11 @@ bool is_frag_coord_within_wave_signal_line_margin(float min_distance_to_nearby_i
 }
 
 float sample_wave_signal_from_envelope_buffer(float bin_index, float wave_signal_vertical_index){
+    float sample_offset = 0.5; // TODO: this eliminates the sampling issues on the edges of the line
     // horizontal sampling normalization
-    float normalized_bin_index = bin_index / NUM_BINS;
+    float normalized_bin_index = (bin_index + sample_offset) / NUM_BINS;
     // normalize and flip the order of the wave signals to have the "closest signal"/bottom signal be the first signal in the history 
-    float normalized_wave_signal_index = TOTAL_CANVAS_HEIGHT - (wave_signal_vertical_index / NUM_HISTORICAL_WAVE_SIGNAL_LINES);
+    float normalized_wave_signal_index = TOTAL_CANVAS_HEIGHT - ((wave_signal_vertical_index + sample_offset) / NUM_HISTORICAL_WAVE_SIGNAL_LINES);
     // essentially this is the abstract sampling of the envelope buffer to get:
     // horizontal data = current location in the audio bin (the amplitudes that make up the individual lines)
     // vertical data = current wave signal that will be updated/drawn to the screen (index in the envelopes discrete history)
